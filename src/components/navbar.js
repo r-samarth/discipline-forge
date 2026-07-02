@@ -102,8 +102,8 @@ export function initNavbarEvents(onLogout, onNavigate) {
   // Logout
   const logoutBtn = document.getElementById('nav-logout');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      logout();
+    logoutBtn.addEventListener('click', async () => {
+      await logout();
       onLogout();
     });
   }

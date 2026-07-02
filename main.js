@@ -4,21 +4,41 @@
 // ==========================================
 
 import './style.css';
-import { isLoggedIn } from './src/auth.js';
+import { subscribeToAuthChanges } from './src/auth.js';
 import { renderLoginPage } from './src/pages/loginPage.js';
 import { renderDashboardPage } from './src/pages/dashboardPage.js';
 import { renderHistoryPage } from './src/pages/historyPage.js';
 
 let currentPage = 'dashboard';
+let isInitialized = false;
 
 function init() {
-  if (isLoggedIn()) {
-    navigateTo(currentPage);
-  } else {
-    renderLoginPage(() => {
-      navigateTo('dashboard');
-    });
-  }
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div style="display: flex; height: 100vh; justify-content: center; align-items: center; color: white;">
+      <h2>Loading DisciplineForge...</h2>
+    </div>
+  `;
+
+  subscribeToAuthChanges((user) => {
+    if (!isInitialized) {
+      isInitialized = true;
+      if (user) {
+        navigateTo(currentPage);
+      } else {
+        renderLoginPage(() => {
+          navigateTo('dashboard');
+        });
+      }
+    } else {
+      // Handle subsequent auth changes (e.g. logout)
+      if (!user) {
+        renderLoginPage(() => {
+          navigateTo('dashboard');
+        });
+      }
+    }
+  });
 }
 
 function navigateTo(page) {
@@ -36,16 +56,16 @@ function navigateTo(page) {
   const app = document.getElementById('app');
   app.classList.add('page-exit');
 
-  setTimeout(() => {
+  setTimeout(async () => {
     switch (page) {
       case 'dashboard':
-        renderDashboardPage(onLogout, onNavigate);
+        await renderDashboardPage(onLogout, onNavigate);
         break;
       case 'history':
-        renderHistoryPage(onLogout, onNavigate);
+        await renderHistoryPage(onLogout, onNavigate);
         break;
       default:
-        renderDashboardPage(onLogout, onNavigate);
+        await renderDashboardPage(onLogout, onNavigate);
     }
 
     app.classList.remove('page-exit');
@@ -56,4 +76,3 @@ function navigateTo(page) {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', init);
-init();

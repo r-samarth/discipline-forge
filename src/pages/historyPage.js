@@ -9,12 +9,21 @@ import { renderHeatmap } from '../heatmap.js';
 import { StorageManager } from '../storage.js';
 import { renderNavbar, initNavbarEvents } from '../components/navbar.js';
 
-export function renderHistoryPage(onLogout, onNavigate) {
+export async function renderHistoryPage(onLogout, onNavigate) {
   const app = document.getElementById('app');
   const user = getCurrentUser();
   if (!user) return;
 
   const taskManager = new TaskManager(user.email);
+  
+  app.innerHTML = `
+    ${renderNavbar(onLogout, onNavigate, 'history')}
+    <main class="dashboard-main" style="display: flex; justify-content: center; align-items: center; min-height: 50vh;">
+      <div style="color: var(--text-secondary);">Loading history...</div>
+    </main>
+  `;
+
+  await taskManager.loadData();
   const history = taskManager.getHistory();
 
   app.innerHTML = `

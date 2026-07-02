@@ -1,103 +1,74 @@
 // ==========================================
 // DisciplineForge — Auth Module
-// Simple email/password auth with localStorage
+// Firebase Authentication
 // ==========================================
 
-const AUTH_KEY = 'disciplineforge_users';
-const SESSION_KEY = 'disciplineforge_session';
+import { auth } from './firebase.js';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
 
-function hashPassword(password) {
-  // Simple hash for localStorage (not for production)
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0;
-  }
-  return hash.toString(36);
+// We wrap onAuthStateChanged so main.js can wait for initial auth state
+export function subscribeToAuthChanges(callback) {
+  return onAuthStateChanged(auth, callback);
 }
 
-function getUsers() {
-  const data = localStorage.getItem(AUTH_KEY);
-  return data ? JSON.parse(data) : {};
-}
-
-function saveUsers(users) {
-  localStorage.setItem(AUTH_KEY, JSON.stringify(users));
-}
-
-export function signup(email, password) {
+export async function signup(email, password) {
   if (!email || !password) {
     return { success: false, message: 'Email and password are required.' };
   }
-  if (password.length < 4) {
-    return { success: false, message: 'Password must be at least 4 characters.' };
+  if (password.length < 6) {
+    return { success: false, message: 'Password must be at least 6 characters for Firebase.' };
   }
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return { success: false, message: 'Please enter a valid email address.' };
+  
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    return { success: true, message: 'Account created successfully!' };
+  } catch (error) {
+    console.error("Signup error:", error);
+    let msg = 'Failed to create account.';
+    if (error.code === 'auth/email-already-in-use') msg = 'An account with this email already exists.';
+    if (error.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
+    return { success: false, message: msg };
   }
-
-  const users = getUsers();
-  const normalizedEmail = email.toLowerCase().trim();
-
-  if (users[normalizedEmail]) {
-    return { success: false, message: 'An account with this email already exists.' };
-  }
-
-  users[normalizedEmail] = {
-    email: normalizedEmail,
-    password: hashPassword(password),
-    createdAt: new Date().toISOString().split('T')[0],
-    displayName: normalizedEmail.split('@')[0]
-  };
-
-  saveUsers(users);
-  setSession(normalizedEmail);
-  return { success: true, message: 'Account created successfully!' };
 }
 
-export function login(email, password) {
+export async function login(email, password) {
   if (!email || !password) {
     return { success: false, message: 'Email and password are required.' };
   }
 
-  const users = getUsers();
-  const normalizedEmail = email.toLowerCase().trim();
-  const user = users[normalizedEmail];
-
-  if (!user) {
-    return { success: false, message: 'No account found with this email.' };
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    return { success: true, message: 'Login successful!' };
+  } catch (error) {
+    console.error("Login error:", error);
+    return { success: false, message: 'Incorrect email or password. Please try again.' };
   }
-
-  if (user.password !== hashPassword(password)) {
-    return { success: false, message: 'Incorrect password. Please try again.' };
-  }
-
-  setSession(normalizedEmail);
-  return { success: true, message: 'Login successful!' };
 }
 
-export function logout() {
-  localStorage.removeItem(SESSION_KEY);
-}
-
-function setSession(email) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({
-    email,
-    loggedInAt: Date.now()
-  }));
+export async function logout() {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
 }
 
 export function getCurrentUser() {
-  const session = localStorage.getItem(SESSION_KEY);
-  if (!session) return null;
-
-  const { email } = JSON.parse(session);
-  const users = getUsers();
-  return users[email] || null;
+  const user = auth.currentUser;
+  if (!user) return null;
+  
+  return {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.email.split('@')[0]
+  };
 }
 
 export function isLoggedIn() {
-  return getCurrentUser() !== null;
+  return auth.currentUser !== null;
 }

@@ -10,12 +10,22 @@ import { StorageManager } from '../storage.js';
 import { renderNavbar, initNavbarEvents } from '../components/navbar.js';
 import { renderAddTaskModal, initAddTaskModal } from '../components/addTaskModal.js';
 
-export function renderDashboardPage(onLogout, onNavigate) {
+export async function renderDashboardPage(onLogout, onNavigate) {
   const app = document.getElementById('app');
   const user = getCurrentUser();
   if (!user) return;
 
   const taskManager = new TaskManager(user.email);
+  
+  // Show a loading state inside the main area before data arrives
+  app.innerHTML = `
+    ${renderNavbar(onLogout, onNavigate, 'dashboard')}
+    <main class="dashboard-main" style="display: flex; justify-content: center; align-items: center; min-height: 50vh;">
+      <div style="color: var(--text-secondary);">Syncing your data from cloud...</div>
+    </main>
+  `;
+
+  await taskManager.loadData();
   const tasks = taskManager.getActiveTasks();
 
   // Calculate overall discipline
@@ -108,8 +118,8 @@ export function renderDashboardPage(onLogout, onNavigate) {
   initNavbarEvents(onLogout, onNavigate);
 
   // Init add task modal
-  initAddTaskModal((name, startDate, subtasks) => {
-    taskManager.createTask(name, startDate, subtasks);
+  initAddTaskModal(async (name, startDate, subtasks) => {
+    await taskManager.createTask(name, startDate, subtasks);
     renderDashboardPage(onLogout, onNavigate);
   });
 
@@ -137,7 +147,7 @@ export function renderDashboardPage(onLogout, onNavigate) {
   // Subtask toggle delegation — use the tasks section container
   const tasksSection = document.getElementById('tasks-section');
   if (tasksSection) {
-    tasksSection.addEventListener('click', (e) => {
+    tasksSection.addEventListener('click', async (e) => {
       const checkItem = e.target.closest('.subtask-check-item');
       if (!checkItem) return;
 
@@ -149,7 +159,7 @@ export function renderDashboardPage(onLogout, onNavigate) {
       if (simpleCheckbox) {
         const taskId = simpleCheckbox.dataset.taskId;
         const date = simpleCheckbox.dataset.date;
-        taskManager.toggleSimpleTask(taskId, date);
+        await taskManager.toggleSimpleTask(taskId, date);
         renderDashboardPage(onLogout, onNavigate);
         return;
       }
@@ -162,7 +172,7 @@ export function renderDashboardPage(onLogout, onNavigate) {
       const subtaskId = checkbox.dataset.subtaskId;
       const date = checkbox.dataset.date;
 
-      taskManager.toggleSubtask(taskId, subtaskId, date);
+      await taskManager.toggleSubtask(taskId, subtaskId, date);
 
       // Re-render dashboard
       renderDashboardPage(onLogout, onNavigate);
@@ -171,12 +181,12 @@ export function renderDashboardPage(onLogout, onNavigate) {
 
   // Terminate task delegation
   document.querySelectorAll('.terminate-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const taskId = btn.dataset.taskId;
       const taskName = btn.dataset.taskName;
 
       if (confirm(`Are you sure you want to terminate "${taskName}"? This will move it to history.`)) {
-        taskManager.terminateTask(taskId);
+        await taskManager.terminateTask(taskId);
         renderDashboardPage(onLogout, onNavigate);
       }
     });

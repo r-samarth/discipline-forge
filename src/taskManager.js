@@ -9,10 +9,18 @@ export class TaskManager {
 
   constructor(userEmail) {
     this.userEmail = userEmail;
+    this.tasks = [];
+    this.history = [];
+  }
+
+  // Load all tasks and history from Firebase into memory
+  async loadData() {
+    this.tasks = await StorageManager.getTasks(this.userEmail);
+    this.history = await StorageManager.getHistory(this.userEmail);
   }
 
   // Create a new task
-  createTask(name, startDate, subtasks) {
+  async createTask(name, startDate, subtasks) {
     const task = {
       id: StorageManager.generateId(),
       name: name.trim(),
@@ -26,22 +34,23 @@ export class TaskManager {
       isActive: true
     };
 
-    StorageManager.addTask(this.userEmail, task);
+    this.tasks.push(task);
+    await StorageManager.addTask(this.userEmail, task);
     return task;
   }
 
   // Get all active tasks
   getActiveTasks() {
-    return StorageManager.getTasks(this.userEmail).filter(t => t.isActive);
+    return this.tasks.filter(t => t.isActive);
   }
 
-  // Get a single task
+  // Get a single task from memory
   getTask(taskId) {
-    return StorageManager.getTaskById(this.userEmail, taskId);
+    return this.tasks.find(t => t.id === taskId) || null;
   }
 
   // Toggle a subtask for a specific date
-  toggleSubtask(taskId, subtaskId, date) {
+  async toggleSubtask(taskId, subtaskId, date) {
     const task = this.getTask(taskId);
     if (!task) return null;
 
@@ -50,12 +59,13 @@ export class TaskManager {
     }
 
     task.dailyLog[date][subtaskId] = !task.dailyLog[date][subtaskId];
+    // We do not await here so UI updates instantly, Firebase syncs in background
     StorageManager.updateTask(this.userEmail, task);
     return task;
   }
 
   // Toggle a simple task (no subtasks) for a specific date
-  toggleSimpleTask(taskId, date) {
+  async toggleSimpleTask(taskId, date) {
     const task = this.getTask(taskId);
     if (!task) return null;
 
@@ -122,11 +132,13 @@ export class TaskManager {
       }
     }
 
-    // Calculate current streak (from today backwards)
+    // Calculate current streak (working backwards from today)
     for (let i = dates.length - 1; i >= 0; i--) {
       if (this.isFullyComplete(taskId, dates[i])) {
         currentStreak++;
       } else {
+        // If today is not complete, check yesterday
+        if (i === dates.length - 1) continue;
         break;
       }
     }
@@ -153,116 +165,62 @@ export class TaskManager {
     return activeDays;
   }
 
-  // Get discipline score (percentage of fully completed days since start)
+  // Calculate discipline score (completed subtasks / total possible subtasks since start)
   getDisciplineScore(taskId) {
     const task = this.getTask(taskId);
     if (!task) return 0;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const start = new Date(task.startDate + 'T00:00:00');
-    const totalDays = Math.max(1, Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1);
+    const todayStr = StorageManager.getToday();
+    // Only count up to today
+    let totalDays = StorageManager.daysBetween(task.startDate, todayStr) + 1;
+    if (totalDays <= 0) return 0;
 
-    let fullyCompletedDays = 0;
-    const d = new Date(start);
-    while (d <= today) {
-      const dateStr = d.toISOString().split('T')[0];
-      if (this.isFullyComplete(taskId, dateStr)) {
-        fullyCompletedDays++;
-      }
-      d.setDate(d.getDate() + 1);
-    }
-
-    return Math.round((fullyCompletedDays / totalDays) * 100);
+    const totalActive = this.getTotalActiveDays(taskId);
+    
+    // Very simple discipline score: percentage of active days vs total days since start
+    return Math.round((totalActive / totalDays) * 100);
   }
 
-  // Terminate a task — move to history
-  terminateTask(taskId) {
-    const task = this.getTask(taskId);
-    if (!task) return null;
-
-    const streaks = this.calculateStreaks(taskId);
-    const totalActiveDays = this.getTotalActiveDays(taskId);
-    const disciplineScore = this.getDisciplineScore(taskId);
-
-    const historyEntry = {
-      ...task,
-      isActive: false,
-      endDate: StorageManager.getToday(),
-      longestStreak: streaks.longest,
-      finalCurrentStreak: streaks.current,
-      totalActiveDays,
-      disciplineScore
-    };
-
-    StorageManager.addToHistory(this.userEmail, historyEntry);
-    StorageManager.removeTask(this.userEmail, taskId);
-
-    return historyEntry;
-  }
-
-  // Get history
-  getHistory() {
-    return StorageManager.getHistory(this.userEmail);
-  }
-
-  // Get heatmap data for a task (last 365 days or from start)
+  // Generate heatmap data for the past year
   getHeatmapData(taskId) {
     const task = this.getTask(taskId);
-    if (!task) return [];
+    if (!task) return {};
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const startDate = new Date(task.startDate + 'T00:00:00');
-
-    // Go back up to 365 days from today, but not before task start
-    const heatmapStart = new Date(today);
-    heatmapStart.setDate(heatmapStart.getDate() - 364);
-    const effectiveStart = heatmapStart > startDate ? heatmapStart : startDate;
-
-    const data = [];
-    const d = new Date(effectiveStart);
-    while (d <= today) {
-      const dateStr = d.toISOString().split('T')[0];
-      const progress = this.getTaskProgress(taskId, dateStr);
-      const beforeStart = d < startDate;
-
-      data.push({
-        date: dateStr,
-        progress: beforeStart ? -1 : progress,
-        isFullyComplete: progress === 100,
-        day: d.getDay()
-      });
-      d.setDate(d.getDate() + 1);
+    const data = {};
+    for (const date of Object.keys(task.dailyLog)) {
+      data[date] = this.getTaskProgress(taskId, date);
     }
-
     return data;
   }
 
-  // Get heatmap data for a history entry (no need to look up active task)
-  getHistoryHeatmapData(historyEntry) {
-    const today = new Date(historyEntry.endDate + 'T00:00:00');
-    const startDate = new Date(historyEntry.startDate + 'T00:00:00');
+  // Terminate a task (move to history)
+  async terminateTask(taskId) {
+    const task = this.getTask(taskId);
+    if (!task) return;
 
-    const data = [];
-    const d = new Date(startDate);
-    while (d <= today) {
-      const dateStr = d.toISOString().split('T')[0];
-      const dayLog = historyEntry.dailyLog[dateStr] || {};
-      const completed = historyEntry.subtasks.filter(st => dayLog[st.id] === true).length;
-      const progress = historyEntry.subtasks.length > 0
-        ? Math.round((completed / historyEntry.subtasks.length) * 100)
-        : 0;
+    task.isActive = false;
+    await StorageManager.updateTask(this.userEmail, task);
 
-      data.push({
-        date: dateStr,
-        progress,
-        isFullyComplete: progress === 100,
-        day: d.getDay()
-      });
-      d.setDate(d.getDate() + 1);
-    }
+    const streaks = this.calculateStreaks(taskId);
+    
+    const historyEntry = {
+      originalTaskId: task.id,
+      name: task.name,
+      startDate: task.startDate,
+      endDate: StorageManager.getToday(),
+      subtasks: task.subtasks,
+      dailyLog: task.dailyLog,
+      finalCurrentStreak: streaks.current,
+      longestStreak: streaks.longest,
+      disciplineScore: this.getDisciplineScore(taskId),
+      totalActiveDays: this.getTotalActiveDays(taskId)
+    };
 
-    return data;
+    this.history.unshift(historyEntry);
+    await StorageManager.addToHistory(this.userEmail, historyEntry);
+  }
+
+  getHistory() {
+    return this.history;
   }
 }

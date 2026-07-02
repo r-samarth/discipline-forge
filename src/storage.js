@@ -1,69 +1,117 @@
 // ==========================================
 // DisciplineForge — Storage Module
-// Centralized localStorage data management
+// Centralized Firestore data management
 // ==========================================
 
-const TASKS_KEY = 'disciplineforge_tasks';
-const HISTORY_KEY = 'disciplineforge_history';
+import { db } from './firebase.js';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  where, 
+  getDocs,
+  orderBy
+} from 'firebase/firestore';
 
 export class StorageManager {
 
   // ---- Tasks ----
 
-  static getTasks(userEmail) {
-    const data = localStorage.getItem(TASKS_KEY);
-    const allTasks = data ? JSON.parse(data) : {};
-    return allTasks[userEmail] || [];
-  }
-
-  static saveTasks(userEmail, tasks) {
-    const data = localStorage.getItem(TASKS_KEY);
-    const allTasks = data ? JSON.parse(data) : {};
-    allTasks[userEmail] = tasks;
-    localStorage.setItem(TASKS_KEY, JSON.stringify(allTasks));
-  }
-
-  static getTaskById(userEmail, taskId) {
-    const tasks = this.getTasks(userEmail);
-    return tasks.find(t => t.id === taskId) || null;
-  }
-
-  static updateTask(userEmail, updatedTask) {
-    const tasks = this.getTasks(userEmail);
-    const index = tasks.findIndex(t => t.id === updatedTask.id);
-    if (index !== -1) {
-      tasks[index] = updatedTask;
-      this.saveTasks(userEmail, tasks);
+  static async getTasks(userEmail) {
+    if (!userEmail) return [];
+    try {
+      const q = query(collection(db, "tasks"), where("userEmail", "==", userEmail));
+      const querySnapshot = await getDocs(q);
+      const tasks = [];
+      querySnapshot.forEach((doc) => {
+        tasks.push(doc.data());
+      });
+      return tasks;
+    } catch (e) {
+      console.error("Error getting tasks:", e);
+      return [];
     }
   }
 
-  static addTask(userEmail, task) {
-    const tasks = this.getTasks(userEmail);
-    tasks.push(task);
-    this.saveTasks(userEmail, tasks);
+  static async getTaskById(userEmail, taskId) {
+    if (!taskId) return null;
+    try {
+      const docRef = doc(db, "tasks", taskId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists() && docSnap.data().userEmail === userEmail) {
+        return docSnap.data();
+      }
+      return null;
+    } catch (e) {
+      console.error("Error getting task:", e);
+      return null;
+    }
   }
 
-  static removeTask(userEmail, taskId) {
-    const tasks = this.getTasks(userEmail).filter(t => t.id !== taskId);
-    this.saveTasks(userEmail, tasks);
+  static async updateTask(userEmail, updatedTask) {
+    try {
+      const docRef = doc(db, "tasks", updatedTask.id);
+      await updateDoc(docRef, updatedTask);
+    } catch (e) {
+      console.error("Error updating task:", e);
+    }
+  }
+
+  static async addTask(userEmail, task) {
+    try {
+      task.userEmail = userEmail; // Ensure the userEmail is on the task
+      const docRef = doc(db, "tasks", task.id);
+      await setDoc(docRef, task);
+    } catch (e) {
+      console.error("Error adding task:", e);
+    }
+  }
+
+  static async removeTask(userEmail, taskId) {
+    try {
+      const docRef = doc(db, "tasks", taskId);
+      await deleteDoc(docRef);
+    } catch (e) {
+      console.error("Error removing task:", e);
+    }
   }
 
   // ---- History ----
 
-  static getHistory(userEmail) {
-    const data = localStorage.getItem(HISTORY_KEY);
-    const allHistory = data ? JSON.parse(data) : {};
-    return allHistory[userEmail] || [];
+  static async getHistory(userEmail) {
+    if (!userEmail) return [];
+    try {
+      // Note: Ordering requires an index in Firestore if combined with 'where' in some cases,
+      // but simple equality + order by on different fields often requires a composite index.
+      // To avoid index creation errors for the user, we will fetch and sort in memory.
+      const q = query(collection(db, "history"), where("userEmail", "==", userEmail));
+      const querySnapshot = await getDocs(q);
+      const history = [];
+      querySnapshot.forEach((doc) => {
+        history.push(doc.data());
+      });
+      // Sort newest first based on endDate
+      history.sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
+      return history;
+    } catch (e) {
+      console.error("Error getting history:", e);
+      return [];
+    }
   }
 
-  static addToHistory(userEmail, historyEntry) {
-    const data = localStorage.getItem(HISTORY_KEY);
-    const allHistory = data ? JSON.parse(data) : {};
-    if (!allHistory[userEmail]) {
-      allHistory[userEmail] = [];
+  static async addToHistory(userEmail, historyEntry) {
+    try {
+      historyEntry.userEmail = userEmail;
+      historyEntry.id = historyEntry.id || this.generateId();
+      const docRef = doc(db, "history", historyEntry.id);
+      await setDoc(docRef, historyEntry);
+    } catch (e) {
+      console.error("Error adding to history:", e);
     }
-    allHistory[userEmail].unshift(historyEntry); // newest first
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(allHistory));
   }
 
   // ---- Utility ----

@@ -127,7 +127,7 @@ export function renderLoginPage(onLoginSuccess) {
 
   // Form submission
   const form = document.getElementById('auth-form');
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const email = document.getElementById('email-input').value;
@@ -139,9 +139,9 @@ export function renderLoginPage(onLoginSuccess) {
     btn.disabled = true;
     loader.classList.remove('hidden');
 
-    setTimeout(() => {
-      const result = isLoginMode ? login(email, password) : signup(email, password);
-
+    try {
+      const result = isLoginMode ? await login(email, password) : await signup(email, password);
+      
       loader.classList.add('hidden');
       btn.disabled = false;
 
@@ -149,12 +149,15 @@ export function renderLoginPage(onLoginSuccess) {
         showSuccess(result.message);
         setTimeout(() => {
           onLoginSuccess();
-        }, 600);
+        }, 800);
       } else {
         showError(result.message);
-        shakeForm();
       }
-    }, 500);
+    } catch (err) {
+      loader.classList.add('hidden');
+      btn.disabled = false;
+      showError('Network error. Please try again later.');
+    }
   });
 
   function showError(msg) {
