@@ -181,15 +181,67 @@ export class TaskManager {
     return Math.round((totalActive / totalDays) * 100);
   }
 
-  // Generate heatmap data for the past year
+  // Get heatmap data for a task (last 365 days or from start)
   getHeatmapData(taskId) {
     const task = this.getTask(taskId);
-    if (!task) return {};
+    if (!task) return [];
 
-    const data = {};
-    for (const date of Object.keys(task.dailyLog)) {
-      data[date] = this.getTaskProgress(taskId, date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = new Date(task.startDate + 'T00:00:00');
+
+    // Go back up to 365 days from today, but not before task start
+    const heatmapStart = new Date(today);
+    heatmapStart.setDate(heatmapStart.getDate() - 364);
+    const effectiveStart = heatmapStart > startDate ? heatmapStart : startDate;
+
+    const data = [];
+    const d = new Date(effectiveStart);
+    while (d <= today) {
+      const dateStr = d.toISOString().split('T')[0];
+      const progress = this.getTaskProgress(taskId, dateStr);
+      const beforeStart = d < startDate;
+
+      data.push({
+        date: dateStr,
+        progress: beforeStart ? -1 : progress,
+        isFullyComplete: progress === 100,
+        day: d.getDay()
+      });
+      d.setDate(d.getDate() + 1);
     }
+
+    return data;
+  }
+
+  // Get heatmap data for a history entry
+  getHistoryHeatmapData(historyEntry) {
+    const today = new Date(historyEntry.endDate + 'T00:00:00');
+    const startDate = new Date(historyEntry.startDate + 'T00:00:00');
+
+    const data = [];
+    const d = new Date(startDate);
+    while (d <= today) {
+      const dateStr = d.toISOString().split('T')[0];
+      const dayLog = historyEntry.dailyLog[dateStr] || {};
+      let progress = 0;
+      
+      if (historyEntry.subtasks.length === 0) {
+        progress = dayLog['_completed'] ? 100 : 0;
+      } else {
+        const completed = historyEntry.subtasks.filter(st => dayLog[st.id] === true).length;
+        progress = Math.round((completed / historyEntry.subtasks.length) * 100);
+      }
+
+      data.push({
+        date: dateStr,
+        progress,
+        isFullyComplete: progress === 100,
+        day: d.getDay()
+      });
+      d.setDate(d.getDate() + 1);
+    }
+
     return data;
   }
 

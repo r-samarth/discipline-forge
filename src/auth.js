@@ -8,12 +8,27 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 
 // We wrap onAuthStateChanged so main.js can wait for initial auth state
 export function subscribeToAuthChanges(callback) {
   return onAuthStateChanged(auth, callback);
+}
+
+export async function loginWithGoogle() {
+  const provider = new GoogleAuthProvider();
+  try {
+    await signInWithPopup(auth, provider);
+    return { success: true, message: 'Google login successful!' };
+  } catch (error) {
+    console.error("Google login error:", error);
+    let msg = 'Failed to login with Google.';
+    if (error.code === 'auth/popup-closed-by-user') msg = 'Google login was cancelled.';
+    return { success: false, message: msg };
+  }
 }
 
 export async function signup(email, password) {

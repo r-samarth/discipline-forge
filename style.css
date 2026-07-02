@@ -711,8 +711,56 @@ input {
   color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
+  width: 100%;
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  margin: var(--space-md) 0;
+}
+
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.auth-divider span {
+  padding: 0 var(--space-sm);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.google-btn {
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  transition: all var(--transition-fast);
+}
+
+.google-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.google-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 
 /* ==========================================
    TASK CARDS
@@ -1633,23 +1681,94 @@ input {
   }
 
   .login-card {
-    padding: var(--space-lg);
+    padding: var(--space-xl);
   }
 
-  .login-title {
-    font-size: 1.6rem;
+  .login-header h1 {
+    font-size: 2rem;
   }
 
-  .fab {
-    bottom: var(--space-md);
-    right: var(--space-md);
-    width: 52px;
-    height: 52px;
+  .navbar {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: var(--space-sm) 0 calc(env(safe-area-inset-bottom, 12px) + var(--space-sm));
+  }
+  
+  .navbar-inner {
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0 var(--space-sm);
+  }
+  
+  .navbar-brand {
+    display: none; /* Hide logo on mobile tab bar */
+  }
+
+  .navbar-links {
+    flex: 1;
+    justify-content: space-around;
+    width: 100%;
+  }
+
+  .nav-link {
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--space-xs);
+    font-size: 0.75rem;
+    background: transparent !important;
+    border: none !important;
+  }
+  
+  .nav-link svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .nav-link.active {
+    color: var(--green-4);
+  }
+  
+  .navbar-user {
+    display: none; /* Hide user avatar on mobile tab bar */
+  }
+
+  .dashboard-main {
+    padding: var(--space-md) var(--space-sm);
+    /* Add padding at bottom to prevent content hiding behind tab bar */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 20px));
+  }
+  
+  /* Full width cards for iOS feel */
+  .task-card {
+    border-radius: var(--radius-lg);
+    border-left: none;
+    border-right: none;
+    padding: var(--space-md);
   }
 
   .modal-card {
     max-height: 85vh;
     padding: var(--space-lg);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    align-self: flex-end;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .fab {
+    bottom: calc(80px + env(safe-area-inset-bottom, 20px));
+    right: var(--space-md);
+    width: 56px;
+    height: 56px;
   }
 
   .heatmap-grid-container {
