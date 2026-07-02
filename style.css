@@ -536,6 +536,10 @@ input {
   border: 1px solid var(--border-default);
 }
 
+.mobile-only {
+  display: none !important;
+}
+
 /* User avatar & dropdown */
 .navbar-user {
   position: relative;
@@ -1735,6 +1739,10 @@ input {
   
   .nav-link.active {
     color: var(--green-4);
+  }
+  
+  .mobile-only {
+    display: flex !important;
   }
   
   .navbar-user {
