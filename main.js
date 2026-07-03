@@ -4,6 +4,7 @@
 // ==========================================
 
 import './style.css';
+import { inject } from "@vercel/analytics";
 import { subscribeToAuthChanges } from './src/auth.js';
 import { renderLoginPage } from './src/pages/loginPage.js';
 import { renderDashboardPage } from './src/pages/dashboardPage.js';
