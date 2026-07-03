@@ -44,10 +44,6 @@ export function renderLandingPage(onNavigateToLogin) {
       <!-- Hero Section -->
       <section class="hero-section">
         <div class="hero-content">
-          <div class="availability-pill">
-            <span class="dot"></span> Available on Web · Mac · iPhone
-          </div>
-          
           <h1 class="hero-title">
             <span class="text-white">Master Your</span><br />
             <span class="text-gradient">Every Single Day.</span>
