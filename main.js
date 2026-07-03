@@ -5,6 +5,12 @@
 
 import './style.css';
 import { inject } from "@vercel/analytics";
+inject();
+
+import { injectSpeedInsights } from "@vercel/speed-insights";
+
+
+injectSpeedInsights();
 import { subscribeToAuthChanges } from './src/auth.js';
 import { renderLoginPage } from './src/pages/loginPage.js';
 import { renderDashboardPage } from './src/pages/dashboardPage.js';
