@@ -2090,8 +2090,24 @@ input {
   transition: transform var(--transition-slow);
 }
 
-.hero-mockup:hover .mockup-window {
+.hero-mockup:hover .mockup-window:not(.heatmap-window) {
   transform: rotateX(0deg) scale(1);
+}
+
+.heatmap-mockup-container {
+  margin-top: -60px;
+  margin-left: 100px;
+  position: relative;
+  z-index: -1;
+}
+
+.heatmap-window {
+  transform: rotateX(5deg) scale(0.9);
+  background: #050505;
+}
+
+.hero-mockup:hover .heatmap-window {
+  transform: rotateX(0deg) scale(0.95) translateY(20px);
 }
 
 .mockup-header {
