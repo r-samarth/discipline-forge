@@ -286,7 +286,7 @@ export function renderLandingPage(onNavigateToLogin) {
         else if (rand < 0.8) intensity = 3;
         else intensity = 4;
       }
-      cellsHtml += \`<div class="heatmap-cell heatmap-cell-\${intensity}"></div>\`;
+      cellsHtml += `<div class="heatmap-cell heatmap-cell-${intensity}"></div>`;
     }
     heatmapGrid.innerHTML = cellsHtml;
   }
