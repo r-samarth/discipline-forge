@@ -2492,3 +2492,70 @@ input {
   color: var(--text-muted);
   font-size: 0.9rem;
 }
+
+/* Landing Page Mobile Fixes */
+@media (max-width: 768px) {
+  .hero-mockup {
+    margin-top: 40px;
+    padding: 0 10px;
+    perspective: none;
+  }
+
+  .mockup-window,
+  .heatmap-window {
+    transform: none !important;
+    border-radius: 16px;
+  }
+  
+  .hero-mockup:hover .mockup-window,
+  .hero-mockup:hover .heatmap-window {
+    transform: none !important; 
+  }
+
+  .mockup-body {
+    padding: 20px;
+    min-height: auto;
+  }
+
+  .heatmap-mockup-container {
+    margin-top: 20px;
+    margin-left: 0;
+  }
+
+  .active-title {
+    font-size: 1.4rem;
+  }
+
+  .mt-time {
+    font-size: 0.75rem;
+    width: 45px;
+  }
+
+  .mockup-task {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .mt-name {
+    font-size: 1rem;
+  }
+  
+  .heatmap-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .heatmap-stat-right {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .built-by-badge {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    margin: 40px auto 0;
+    width: max-content;
+  }
+}
