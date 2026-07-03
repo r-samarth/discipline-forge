@@ -5,11 +5,12 @@
 
 import { login, signup, loginWithGoogle } from '../auth.js';
 
-export function renderLoginPage(onLoginSuccess) {
+export function renderLoginPage(onLoginSuccess, onBack) {
   const app = document.getElementById('app');
 
   app.innerHTML = `
     <div class="login-page">
+      <button class="back-home-btn" id="back-home-btn">← Back to Home</button>
       <div class="particles-bg" id="particles"></div>
 
       <div class="login-container">
@@ -103,6 +104,11 @@ export function renderLoginPage(onLoginSuccess) {
 
   // Initialize particles
   createParticles();
+
+  // Back button
+  document.getElementById('back-home-btn')?.addEventListener('click', () => {
+    if (onBack) onBack();
+  });
 
   // Tab switching
   let isLoginMode = true;

@@ -14,6 +14,15 @@ import { renderLandingPage } from './src/pages/landingPage.js';
 let currentPage = 'dashboard';
 let isInitialized = false;
 
+function showLanding() {
+  renderLandingPage(() => {
+    renderLoginPage(
+      () => navigateTo('dashboard'),
+      showLanding
+    );
+  });
+}
+
 function init() {
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -28,20 +37,12 @@ function init() {
       if (user) {
         navigateTo(currentPage);
       } else {
-        renderLandingPage(() => {
-          renderLoginPage(() => {
-            navigateTo('dashboard');
-          });
-        });
+        showLanding();
       }
     } else {
       // Handle subsequent auth changes (e.g. logout)
       if (!user) {
-        renderLandingPage(() => {
-          renderLoginPage(() => {
-            navigateTo('dashboard');
-          });
-        });
+        showLanding();
       }
     }
   });
@@ -51,9 +52,7 @@ function navigateTo(page) {
   currentPage = page;
 
   const onLogout = () => {
-    renderLoginPage(() => {
-      navigateTo('dashboard');
-    });
+    showLanding();
   };
 
   const onNavigate = (p) => navigateTo(p);
