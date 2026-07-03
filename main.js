@@ -9,6 +9,8 @@ import { renderLoginPage } from './src/pages/loginPage.js';
 import { renderDashboardPage } from './src/pages/dashboardPage.js';
 import { renderHistoryPage } from './src/pages/historyPage.js';
 
+import { renderLandingPage } from './src/pages/landingPage.js';
+
 let currentPage = 'dashboard';
 let isInitialized = false;
 
@@ -26,15 +28,19 @@ function init() {
       if (user) {
         navigateTo(currentPage);
       } else {
-        renderLoginPage(() => {
-          navigateTo('dashboard');
+        renderLandingPage(() => {
+          renderLoginPage(() => {
+            navigateTo('dashboard');
+          });
         });
       }
     } else {
       // Handle subsequent auth changes (e.g. logout)
       if (!user) {
-        renderLoginPage(() => {
-          navigateTo('dashboard');
+        renderLandingPage(() => {
+          renderLoginPage(() => {
+            navigateTo('dashboard');
+          });
         });
       }
     }

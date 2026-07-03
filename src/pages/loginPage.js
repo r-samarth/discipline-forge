@@ -22,17 +22,17 @@ export function renderLoginPage(onLoginSuccess) {
                 <path d="M6 14L42 34" stroke="url(#grad1)" stroke-width="1.5" opacity="0.5"/>
                 <path d="M42 14L6 34" stroke="url(#grad1)" stroke-width="1.5" opacity="0.5"/>
                 <circle cx="24" cy="24" r="6" fill="url(#grad1)" opacity="0.8"/>
-                <circle cx="24" cy="24" r="3" fill="#0d1117"/>
+                <circle cx="24" cy="24" r="3" fill="#000000"/>
                 <defs>
                   <linearGradient id="grad1" x1="6" y1="4" x2="42" y2="44">
-                    <stop offset="0%" stop-color="#39d353"/>
-                    <stop offset="100%" stop-color="#26a641"/>
+                    <stop offset="0%" stop-color="#9d4edd"/>
+                    <stop offset="100%" stop-color="#7b2cbf"/>
                   </linearGradient>
                 </defs>
               </svg>
             </div>
             <h1 class="login-title">DisciplineForge</h1>
-            <p class="login-subtitle">Forge your habits. Build your streaks. Master discipline.</p>
+            <p class="login-subtitle">Master your habits. Master your every single day.</p>
           </div>
 
           <div class="login-tabs">
