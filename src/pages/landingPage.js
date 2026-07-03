@@ -31,7 +31,7 @@ export function renderLandingPage(onNavigateToLogin) {
           <div class="nav-links desktop-only">
             <a href="#features" class="nav-link">Features</a>
             <a href="#how-it-works" class="nav-link">How It Works</a>
-            <a href="https://samarth-r.vercel.app/" target="_blank" rel="noopener noreferrer" class="nav-link">About Sam</a>
+            <a href="#about" class="nav-link">About Sam</a>
           </div>
 
           <div class="nav-actions">
@@ -143,11 +143,93 @@ export function renderLandingPage(onNavigateToLogin) {
           </div>
         </div>
       </section>
+
+      <!-- Features & Advantages Section -->
+      <section id="features" class="content-section">
+        <div class="section-container">
+          <h2 class="section-title">Why DisciplineForge?</h2>
+          <p class="section-subtitle">The ultimate tool to build consistency and master your daily routine.</p>
+          
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">🔥</div>
+              <h3>Streak Tracking</h3>
+              <p>Keep the fire burning. Track your consecutive days and build unbreakable habits.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📊</div>
+              <h3>Visual Heatmaps</h3>
+              <p>GitHub-style contribution graphs give you an instant overview of your long-term consistency.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⚡️</div>
+              <h3>Discipline Score</h3>
+              <p>Get a precise metric of your overall discipline based on your daily completion rates.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works Section -->
+      <section id="how-it-works" class="content-section alternate">
+        <div class="section-container">
+          <h2 class="section-title">How It Works</h2>
+          <p class="section-subtitle">Three simple steps to transform your life.</p>
+          
+          <div class="steps-container">
+            <div class="step">
+              <div class="step-number">1</div>
+              <h3>Define Your Tasks</h3>
+              <p>Create tasks for habits you want to build or routines you need to follow.</p>
+            </div>
+            <div class="step">
+              <div class="step-number">2</div>
+              <h3>Check In Daily</h3>
+              <p>Log in every day and check off your completed tasks or subtasks.</p>
+            </div>
+            <div class="step">
+              <div class="step-number">3</div>
+              <h3>Watch It Grow</h3>
+              <p>Review your heatmaps and streaks as your discipline score climbs to 100%.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- About Sam Section -->
+      <section id="about" class="content-section">
+        <div class="section-container">
+          <div class="about-card">
+            <div class="about-avatar">
+              <span>S</span>
+            </div>
+            <div class="about-info">
+              <h2 class="section-title" style="text-align: left; margin-bottom: 8px;">About Sam</h2>
+              <p>Hi, I'm Sam. I built DisciplineForge to solve my own problem: staying consistent. This platform is designed with a premium, distraction-free aesthetic to help you focus on what truly matters—forging your daily discipline without the noise.</p>
+              <a href="https://samarth-r.vercel.app/" target="_blank" rel="noopener noreferrer" class="about-link">Visit my portfolio →</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Final CTA Section -->
+      <section class="cta-section">
+        <div class="section-container">
+          <h2 class="section-title">Ready to master your day?</h2>
+          <p class="section-subtitle">Join today and start building your unbroken streaks.</p>
+          <button class="btn-primary" id="final-get-started-btn">Get Started Now</button>
+        </div>
+      </section>
+      
+      <footer class="landing-footer">
+        <p>&copy; ${new Date().getFullYear()} DisciplineForge. Built by Sam.</p>
+      </footer>
     </div>
   `;
 
   // Attach events
-  const navigateToLogin = () => {
+  const navigateToLogin = (e) => {
+    if (e) e.preventDefault();
     onNavigateToLogin();
   };
 
@@ -155,4 +237,21 @@ export function renderLandingPage(onNavigateToLogin) {
   document.getElementById('landing-get-started-btn')?.addEventListener('click', navigateToLogin);
   document.getElementById('hero-get-started-btn')?.addEventListener('click', navigateToLogin);
   document.getElementById('hero-signin-btn')?.addEventListener('click', navigateToLogin);
+  document.getElementById('final-get-started-btn')?.addEventListener('click', navigateToLogin);
+  
+  // Smooth scroll for nav links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      const targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      
+      const targetElement = document.querySelector(targetId);
+      if (targetElement) {
+        e.preventDefault();
+        targetElement.scrollIntoView({
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
 }
