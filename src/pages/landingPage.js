@@ -150,7 +150,7 @@ export function renderLandingPage(onNavigateToLogin) {
                       <span>Current Streak: <strong class="text-gradient">12 days 🔥</strong></span>
                     </div>
                   </div>
-                  <div class="heatmap-grid-container" style="overflow: hidden;">
+                  <div class="heatmap-grid-container">
                     <div class="heatmap-day-labels">
                       <span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span>
                     </div>

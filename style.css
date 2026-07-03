@@ -2520,6 +2520,14 @@ input {
   .heatmap-mockup-container {
     margin-top: 20px;
     margin-left: 0;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .heatmap-grid-container {
+    overflow-x: auto;
+    padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .active-title {
