@@ -1096,7 +1096,7 @@ input {
 /* ── Month blocks container ── */
 .heatmap-months-container {
   display: flex;
-  gap: 12px;
+  gap: 6px;
   overflow-x: auto;
   padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
@@ -1106,7 +1106,8 @@ input {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .heatmap-month-label {
@@ -1122,11 +1123,12 @@ input {
   grid-template-rows: repeat(7, 1fr);
   grid-auto-flow: column;
   gap: 3px;
+  width: 100%;
 }
 
 .heatmap-cell {
-  width: 13px;
-  height: 13px;
+  aspect-ratio: 1;
+  width: 100%;
   border-radius: 3px;
   transition: all var(--transition-fast);
 }
@@ -1811,9 +1813,8 @@ input {
     overflow-x: auto;
   }
 
-  .heatmap-cell {
-    width: 11px;
-    height: 11px;
+  .heatmap-month-grid {
+    gap: 2px;
   }
 }
 
@@ -1826,9 +1827,8 @@ input {
     padding: var(--space-md);
   }
 
-  .heatmap-cell {
-    width: 9px;
-    height: 9px;
+  .heatmap-month-grid {
+    gap: 2px;
   }
 }
 
