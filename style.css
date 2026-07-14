@@ -1099,15 +1099,6 @@ input {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.heatmap-top-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
 }
 
 .heatmap-submissions-count {
@@ -1117,55 +1108,6 @@ input {
 
 .heatmap-submissions-count strong {
   color: var(--text-primary);
-}
-
-.heatmap-period-dropdown {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border: 1px solid var(--border-muted);
-  border-radius: var(--radius-sm, 6px);
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  user-select: none;
-  transition: border-color var(--transition-fast);
-}
-
-.heatmap-period-dropdown:hover {
-  border-color: var(--text-muted);
-}
-
-.heatmap-top-right {
-  display: flex;
-  gap: 0;
-}
-
-.heatmap-toggle-btn {
-  padding: 5px 16px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border: 1px solid var(--border-muted);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.heatmap-toggle-btn:first-child {
-  border-radius: 6px 0 0 6px;
-}
-
-.heatmap-toggle-btn:last-child {
-  border-radius: 0 6px 6px 0;
-  border-left: none;
-}
-
-.heatmap-toggle-active {
-  background: rgba(180, 130, 80, 0.25);
-  color: #c9935a;
-  border-color: rgba(180, 130, 80, 0.4);
 }
 
 /* ── Month labels ── */

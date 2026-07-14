@@ -53,23 +53,11 @@ export function renderHeatmap(data, containerId, options = {}) {
 
   let html = `<div class="heatmap-wrapper">`;
 
-  // ── Top bar: submissions count + period dropdown + legend toggles ──
+  // ── Top bar: submissions count ──
   if (showStats) {
     html += `
       <div class="heatmap-top-bar">
-        <div class="heatmap-top-left">
-          <span class="heatmap-submissions-count"><strong>${totalSubmissions}</strong> submissions in the last 12 months</span>
-          <div class="heatmap-period-dropdown">
-            <span>Last 12 months</span>
-            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-              <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-        <div class="heatmap-top-right">
-          <button class="heatmap-toggle-btn heatmap-toggle-active">TUF</button>
-          <button class="heatmap-toggle-btn">LeetCode</button>
-        </div>
+        <span class="heatmap-submissions-count"><strong>${totalSubmissions}</strong> submissions in the last 12 months</span>
       </div>
     `;
   }
