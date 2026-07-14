@@ -17,22 +17,71 @@ export function renderHeatmap(data, containerId, options = {}) {
     totalActiveDays = 0
   } = options;
 
-  // Group data entries by year-month
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const months = groupByMonth(data);
+
+  // Build a lookup map: "YYYY-MM-DD" → progress
+  const dataMap = new Map();
+  for (const entry of data) {
+    if (entry.date) dataMap.set(entry.date, entry.progress);
+  }
+
+  // Always show the last 12 months (current month + 11 previous)
+  const today = new Date();
+  const months = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    months.push({ year: d.getFullYear(), month: d.getMonth() });
+  }
 
   let html = `<div class="heatmap-wrapper">`;
 
   // ── Month blocks container ──
   html += `<div class="heatmap-months-container">`;
 
-  for (const month of months) {
+  for (const { year, month } of months) {
     html += `<div class="heatmap-month-block">`;
-    html += `<span class="heatmap-month-label">${monthNames[month.month]}</span>`;
+    html += `<span class="heatmap-month-label">${monthNames[month]}</span>`;
 
-    // Build weeks for this month
-    const weeks = buildMonthWeeks(month.entries);
+    // Build all days in this month
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const entries = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(year, month, day);
+      // Don't show future days
+      if (dateObj > today) {
+        entries.push({ date: '', progress: -1, empty: true });
+        continue;
+      }
+      const dateStr = dateObj.toISOString().split('T')[0];
+      const progress = dataMap.has(dateStr) ? dataMap.get(dateStr) : 0;
+      entries.push({ date: dateStr, progress });
+    }
 
+    // Build weekly columns (7 rows: Sun–Sat)
+    const weeks = [];
+    let currentWeek = [];
+
+    // Pad start to align first day of month
+    const firstDayOfWeek = new Date(year, month, 1).getDay();
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      currentWeek.push({ date: '', progress: -1, empty: true });
+    }
+
+    for (const entry of entries) {
+      currentWeek.push(entry);
+      if (currentWeek.length === 7) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+    }
+    if (currentWeek.length > 0) {
+      while (currentWeek.length < 7) {
+        currentWeek.push({ date: '', progress: -1, empty: true });
+      }
+      weeks.push(currentWeek);
+    }
+
+    // Render the per-month grid
     html += `<div class="heatmap-month-grid" style="grid-template-columns: repeat(${weeks.length}, 1fr);">`;
 
     for (let row = 0; row < 7; row++) {
@@ -81,59 +130,6 @@ export function renderHeatmap(data, containerId, options = {}) {
   html += `</div>`; // close heatmap-wrapper
 
   container.innerHTML = html;
-}
-
-/**
- * Group data entries into an ordered array of { year, month, entries[] }.
- */
-function groupByMonth(data) {
-  const map = new Map();
-
-  for (const entry of data) {
-    if (!entry.date) continue;
-    const d = new Date(entry.date + 'T00:00:00');
-    const key = `${d.getFullYear()}-${d.getMonth()}`;
-    if (!map.has(key)) {
-      map.set(key, { year: d.getFullYear(), month: d.getMonth(), entries: [] });
-    }
-    map.get(key).entries.push(entry);
-  }
-
-  return Array.from(map.values());
-}
-
-/**
- * Build weekly columns for a single month's entries.
- * Each column is an array of 7 slots (Sun=0 … Sat=6).
- */
-function buildMonthWeeks(entries) {
-  const weeks = [];
-  let currentWeek = [];
-
-  // Pad start to align first day to its weekday
-  if (entries.length > 0) {
-    const firstDay = new Date(entries[0].date + 'T00:00:00').getDay();
-    for (let i = 0; i < firstDay; i++) {
-      currentWeek.push({ date: '', progress: -1, empty: true });
-    }
-  }
-
-  for (const entry of entries) {
-    currentWeek.push(entry);
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-      currentWeek = [];
-    }
-  }
-
-  if (currentWeek.length > 0) {
-    while (currentWeek.length < 7) {
-      currentWeek.push({ date: '', progress: -1, empty: true });
-    }
-    weeks.push(currentWeek);
-  }
-
-  return weeks;
 }
 
 function getColorLevel(progress) {
