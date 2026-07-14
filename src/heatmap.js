@@ -1,6 +1,6 @@
 // ==========================================
 // DisciplineForge — Heatmap Renderer
-// GitHub-style contribution heatmap
+// Month-block contribution heatmap
 // ==========================================
 
 import { StorageManager } from './storage.js';
@@ -17,102 +17,123 @@ export function renderHeatmap(data, containerId, options = {}) {
     totalActiveDays = 0
   } = options;
 
-  // Calculate total submissions (days with any activity)
-  const totalSubmissions = data.filter(d => d.progress > 0).length;
+  // Group data entries by year-month
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = groupByMonth(data);
 
-  // Build the heatmap grid
-  // GitHub-style: 7 rows (Sun-Sat), columns = weeks
+  let html = `<div class="heatmap-wrapper">`;
+
+  // ── Month blocks container ──
+  html += `<div class="heatmap-months-container">`;
+
+  for (const month of months) {
+    html += `<div class="heatmap-month-block">`;
+    html += `<span class="heatmap-month-label">${monthNames[month.month]}</span>`;
+
+    // Build weeks for this month
+    const weeks = buildMonthWeeks(month.entries);
+
+    html += `<div class="heatmap-month-grid" style="grid-template-columns: repeat(${weeks.length}, 1fr);">`;
+
+    for (let row = 0; row < 7; row++) {
+      for (let col = 0; col < weeks.length; col++) {
+        const cell = weeks[col][row];
+        if (!cell || cell.empty) {
+          html += `<div class="heatmap-cell heatmap-cell-empty"></div>`;
+        } else {
+          const level = getColorLevel(cell.progress);
+          const tooltip = cell.date
+            ? `${StorageManager.formatDate(cell.date)}: ${cell.progress}% complete`
+            : '';
+          html += `<div class="heatmap-cell heatmap-cell-${level}" data-date="${cell.date}" data-progress="${cell.progress}" title="${tooltip}"></div>`;
+        }
+      }
+    }
+
+    html += `</div>`; // close month-grid
+    html += `</div>`; // close month-block
+  }
+
+  html += `</div>`; // close months-container
+
+  // ── Bottom bar: Active Days / Max Streak + legend ──
+  if (showStats) {
+    html += `
+      <div class="heatmap-bottom-bar">
+        <div class="heatmap-bottom-left">
+          <span>Active Days - <strong>${totalActiveDays}</strong></span>
+          <span>Max Streak - <strong>${longestStreak}</strong></span>
+        </div>
+        <div class="heatmap-bottom-right">
+          <span class="heatmap-legend-item">
+            <span class="heatmap-legend-swatch heatmap-cell-0"></span>
+            Not visited yet
+          </span>
+          <span class="heatmap-legend-item">
+            <span class="heatmap-legend-swatch heatmap-cell-4"></span>
+            Achieved
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
+  html += `</div>`; // close heatmap-wrapper
+
+  container.innerHTML = html;
+}
+
+/**
+ * Group data entries into an ordered array of { year, month, entries[] }.
+ */
+function groupByMonth(data) {
+  const map = new Map();
+
+  for (const entry of data) {
+    if (!entry.date) continue;
+    const d = new Date(entry.date + 'T00:00:00');
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!map.has(key)) {
+      map.set(key, { year: d.getFullYear(), month: d.getMonth(), entries: [] });
+    }
+    map.get(key).entries.push(entry);
+  }
+
+  return Array.from(map.values());
+}
+
+/**
+ * Build weekly columns for a single month's entries.
+ * Each column is an array of 7 slots (Sun=0 … Sat=6).
+ */
+function buildMonthWeeks(entries) {
   const weeks = [];
   let currentWeek = [];
 
-  // Pad the start to align with the correct day of the week
-  if (data.length > 0) {
-    const firstDay = new Date(data[0].date + 'T00:00:00').getDay();
+  // Pad start to align first day to its weekday
+  if (entries.length > 0) {
+    const firstDay = new Date(entries[0].date + 'T00:00:00').getDay();
     for (let i = 0; i < firstDay; i++) {
       currentWeek.push({ date: '', progress: -1, empty: true });
     }
   }
 
-  for (const entry of data) {
+  for (const entry of entries) {
     currentWeek.push(entry);
     if (currentWeek.length === 7) {
       weeks.push(currentWeek);
       currentWeek = [];
     }
   }
+
   if (currentWeek.length > 0) {
-    // Pad the end
     while (currentWeek.length < 7) {
       currentWeek.push({ date: '', progress: -1, empty: true });
     }
     weeks.push(currentWeek);
   }
 
-  // Get month labels positioned at the correct week column
-  const monthPositions = getMonthPositions(weeks);
-
-  let html = `<div class="heatmap-wrapper">`;
-
-  // ── Top bar: submissions count ──
-  if (showStats) {
-    html += `
-      <div class="heatmap-top-bar">
-        <span class="heatmap-submissions-count"><strong>${totalSubmissions}</strong> submissions in the last 12 months</span>
-      </div>
-    `;
-  }
-
-  // ── Month labels row ──
-  html += `<div class="heatmap-months-row">`;
-  for (const { label, col } of monthPositions) {
-    html += `<span class="heatmap-month-label" style="grid-column: ${col + 1};">${label}</span>`;
-  }
-  html += `</div>`;
-
-  // ── Grid (no day labels — clean look) ──
-  html += `<div class="heatmap-grid-wrap">`;
-  html += `<div class="heatmap-grid" style="grid-template-columns: repeat(${weeks.length}, 1fr);">`;
-
-  for (let row = 0; row < 7; row++) {
-    for (let col = 0; col < weeks.length; col++) {
-      const cell = weeks[col][row];
-      if (!cell || cell.empty) {
-        html += `<div class="heatmap-cell heatmap-cell-empty"></div>`;
-      } else {
-        const level = getColorLevel(cell.progress);
-        const tooltip = cell.date
-          ? `${StorageManager.formatDate(cell.date)}: ${cell.progress}% complete`
-          : '';
-        html += `<div class="heatmap-cell heatmap-cell-${level}" data-date="${cell.date}" data-progress="${cell.progress}" title="${tooltip}"></div>`;
-      }
-    }
-  }
-
-  html += `</div></div>`; // close grid + grid-wrap
-
-  // ── Bottom bar: Active Days / Max Streak + legend ──
-  html += `
-    <div class="heatmap-bottom-bar">
-      <div class="heatmap-bottom-left">
-        <span>Active Days - <strong>${totalActiveDays}</strong></span>
-        <span>Max Streak - <strong>${longestStreak}</strong></span>
-      </div>
-      <div class="heatmap-bottom-right">
-        <span class="heatmap-legend-item">
-          <span class="heatmap-legend-swatch heatmap-cell-0"></span>
-          Not visited yet
-        </span>
-        <span class="heatmap-legend-item">
-          <span class="heatmap-legend-swatch heatmap-cell-4"></span>
-          Achieved
-        </span>
-      </div>
-    </div>
-  `;
-
-  html += `</div>`; // close heatmap-wrapper
-
-  container.innerHTML = html;
+  return weeks;
 }
 
 function getColorLevel(progress) {
@@ -121,30 +142,4 @@ function getColorLevel(progress) {
   if (progress <= 50) return '2';
   if (progress <= 75) return '3';
   return '4';
-}
-
-function getMonthLabels() {
-  return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-}
-
-/**
- * Return an array of { label, col } for every month boundary in the weeks array.
- */
-function getMonthPositions(weeks) {
-  const labels = getMonthLabels();
-  const positions = [];
-  let lastMonth = -1;
-
-  for (let w = 0; w < weeks.length; w++) {
-    const firstValidEntry = weeks[w].find(d => d.date && !d.empty);
-    if (firstValidEntry) {
-      const month = new Date(firstValidEntry.date + 'T00:00:00').getMonth();
-      if (month !== lastMonth) {
-        positions.push({ label: labels[month], col: w });
-        lastMonth = month;
-      }
-    }
-  }
-
-  return positions;
 }

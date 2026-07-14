@@ -1079,7 +1079,7 @@ input {
 
 
 /* ==========================================
-   HEATMAP  (TUF / LeetCode style)
+   HEATMAP  (month-block style)
    ========================================== */
 
 .task-heatmap {
@@ -1093,45 +1093,31 @@ input {
   border-radius: var(--radius-lg, 14px);
 }
 
-/* ── Top bar ── */
-.heatmap-top-bar {
+/* ── Month blocks container ── */
+.heatmap-months-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
 }
 
-.heatmap-submissions-count {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-}
-
-.heatmap-submissions-count strong {
-  color: var(--text-primary);
-}
-
-/* ── Month labels ── */
-.heatmap-months-row {
-  display: grid;
-  grid-template-columns: repeat(53, 1fr);
-  margin-bottom: 6px;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  min-height: 16px;
+.heatmap-month-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
 }
 
 .heatmap-month-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
   white-space: nowrap;
 }
 
-/* ── Grid ── */
-.heatmap-grid-wrap {
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.heatmap-grid {
+/* ── Per-month grid ── */
+.heatmap-month-grid {
   display: grid;
   grid-template-rows: repeat(7, 1fr);
   grid-auto-flow: column;
@@ -1721,11 +1707,6 @@ input {
     font-size: 1.3rem;
   }
 
-  .heatmap-top-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .heatmap-bottom-bar {
     flex-direction: column;
     align-items: flex-start;
@@ -1826,7 +1807,7 @@ input {
     height: 56px;
   }
 
-  .heatmap-grid-wrap {
+  .heatmap-months-container {
     overflow-x: auto;
   }
 
@@ -2551,7 +2532,7 @@ input {
     width: 100%;
   }
 
-  .heatmap-grid-wrap {
+  .heatmap-months-container {
     overflow-x: auto;
     padding-bottom: 10px;
     -webkit-overflow-scrolling: touch;
@@ -2573,12 +2554,6 @@ input {
 
   .mt-name {
     font-size: 1rem;
-  }
-  
-  .heatmap-top-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
   }
 
   .heatmap-bottom-bar {
