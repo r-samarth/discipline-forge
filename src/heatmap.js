@@ -48,56 +48,41 @@ export function renderHeatmap(data, containerId, options = {}) {
     weeks.push(currentWeek);
   }
 
-  // Get month labels
-  const monthLabels = getMonthLabels(data);
+  // Get month labels positioned at the correct week column
+  const monthPositions = getMonthPositions(weeks);
 
   let html = `<div class="heatmap-wrapper">`;
 
-  // Stats bar
+  // ── Top bar: submissions count + period dropdown + legend toggles ──
   if (showStats) {
     html += `
-      <div class="heatmap-stats">
-        <span class="heatmap-stat-total"><strong>${totalSubmissions}</strong> active days in the past year</span>
-        <div class="heatmap-stat-right">
-          <span>Total active days: <strong>${totalActiveDays}</strong></span>
-          <span>Max streak: <strong>${longestStreak}</strong></span>
-          <span>Current streak: <strong>${currentStreak}</strong> 🔥</span>
+      <div class="heatmap-top-bar">
+        <div class="heatmap-top-left">
+          <span class="heatmap-submissions-count"><strong>${totalSubmissions}</strong> submissions in the last 12 months</span>
+          <div class="heatmap-period-dropdown">
+            <span>Last 12 months</span>
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="heatmap-top-right">
+          <button class="heatmap-toggle-btn heatmap-toggle-active">TUF</button>
+          <button class="heatmap-toggle-btn">LeetCode</button>
         </div>
       </div>
     `;
   }
 
-  // Month labels
-  html += `<div class="heatmap-months">`;
-  html += `<div class="heatmap-day-labels-spacer"></div>`;
-  let lastMonth = -1;
-  for (let w = 0; w < weeks.length; w++) {
-    const firstValidEntry = weeks[w].find(d => d.date && !d.empty);
-    if (firstValidEntry) {
-      const month = new Date(firstValidEntry.date + 'T00:00:00').getMonth();
-      if (month !== lastMonth) {
-        html += `<span class="heatmap-month-label" style="grid-column: ${w + 2}">${monthLabels[month]}</span>`;
-        lastMonth = month;
-      }
-    }
+  // ── Month labels row ──
+  html += `<div class="heatmap-months-row">`;
+  for (const { label, col } of monthPositions) {
+    html += `<span class="heatmap-month-label" style="grid-column: ${col + 1};">${label}</span>`;
   }
   html += `</div>`;
 
-  // Grid container
-  html += `<div class="heatmap-grid-container">`;
-
-  // Day labels
-  html += `<div class="heatmap-day-labels">
-    <span></span>
-    <span>Mon</span>
-    <span></span>
-    <span>Wed</span>
-    <span></span>
-    <span>Fri</span>
-    <span></span>
-  </div>`;
-
-  // The actual grid
+  // ── Grid (no day labels — clean look) ──
+  html += `<div class="heatmap-grid-wrap">`;
   html += `<div class="heatmap-grid" style="grid-template-columns: repeat(${weeks.length}, 1fr);">`;
 
   for (let row = 0; row < 7; row++) {
@@ -115,18 +100,25 @@ export function renderHeatmap(data, containerId, options = {}) {
     }
   }
 
-  html += `</div></div>`; // close grid + grid-container
+  html += `</div></div>`; // close grid + grid-wrap
 
-  // Color legend
+  // ── Bottom bar: Active Days / Max Streak + legend ──
   html += `
-    <div class="heatmap-legend">
-      <span>Less</span>
-      <div class="heatmap-cell heatmap-cell-0"></div>
-      <div class="heatmap-cell heatmap-cell-1"></div>
-      <div class="heatmap-cell heatmap-cell-2"></div>
-      <div class="heatmap-cell heatmap-cell-3"></div>
-      <div class="heatmap-cell heatmap-cell-4"></div>
-      <span>More</span>
+    <div class="heatmap-bottom-bar">
+      <div class="heatmap-bottom-left">
+        <span>Active Days - <strong>${totalActiveDays}</strong></span>
+        <span>Max Streak - <strong>${longestStreak}</strong></span>
+      </div>
+      <div class="heatmap-bottom-right">
+        <span class="heatmap-legend-item">
+          <span class="heatmap-legend-swatch heatmap-cell-0"></span>
+          Not visited yet
+        </span>
+        <span class="heatmap-legend-item">
+          <span class="heatmap-legend-swatch heatmap-cell-4"></span>
+          Achieved
+        </span>
+      </div>
     </div>
   `;
 
@@ -143,6 +135,28 @@ function getColorLevel(progress) {
   return '4';
 }
 
-function getMonthLabels(data) {
+function getMonthLabels() {
   return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+}
+
+/**
+ * Return an array of { label, col } for every month boundary in the weeks array.
+ */
+function getMonthPositions(weeks) {
+  const labels = getMonthLabels();
+  const positions = [];
+  let lastMonth = -1;
+
+  for (let w = 0; w < weeks.length; w++) {
+    const firstValidEntry = weeks[w].find(d => d.date && !d.empty);
+    if (firstValidEntry) {
+      const month = new Date(firstValidEntry.date + 'T00:00:00').getMonth();
+      if (month !== lastMonth) {
+        positions.push({ label: labels[month], col: w });
+        lastMonth = month;
+      }
+    }
+  }
+
+  return positions;
 }
